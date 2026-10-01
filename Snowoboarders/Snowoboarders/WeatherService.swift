@@ -8,10 +8,12 @@ import CoreLocation
 import Combine
 
 struct Weather {
-    let temperature: Double
-    let windSpeed: Double
+    let temperatureCelsius: Double
+    let windMetersPerSecond: Double
     let description: String
     let iconCode: String
+
+    var isClearDay: Bool { iconCode == "01d" }
 
     var symbolName: String {
         switch iconCode {
@@ -50,11 +52,13 @@ final class WeatherService: ObservableObject {
     private var refreshTimer: Timer?
     private static let refreshInterval: TimeInterval = 600
 
-    func start(location: @escaping () -> CLLocation?, unitsMetric: @escaping () -> Bool) {
+    func start(location: @escaping () -> CLLocation?) {
         refreshTimer?.invalidate()
-        refresh(location: location(), unitsMetric: unitsMetric())
+        refresh(location: location())
         refreshTimer = Timer.scheduledTimer(withTimeInterval: Self.refreshInterval, repeats: true) { [weak self] _ in
-            self?.refresh(location: location(), unitsMetric: unitsMetric())
+            MainActor.assumeIsolated {
+                self?.refresh(location: location())
+            }
         }
     }
 
@@ -63,19 +67,18 @@ final class WeatherService: ObservableObject {
         refreshTimer = nil
     }
 
-    func refresh(location: CLLocation?, unitsMetric: Bool) {
+    func refresh(location: CLLocation?) {
         guard let location else { return }
         guard !Secrets.openWeatherMapAPIKey.isEmpty else {
             errorMessage = "No OpenWeatherMap API key set"
             return
         }
 
-        let units = unitsMetric ? "metric" : "imperial"
         var components = URLComponents(string: "https://api.openweathermap.org/data/2.5/weather")!
         components.queryItems = [
             URLQueryItem(name: "lat", value: String(location.coordinate.latitude)),
             URLQueryItem(name: "lon", value: String(location.coordinate.longitude)),
-            URLQueryItem(name: "units", value: units),
+            URLQueryItem(name: "units", value: "metric"),
             URLQueryItem(name: "appid", value: Secrets.openWeatherMapAPIKey),
         ]
         guard let url = components.url else { return }
@@ -90,8 +93,8 @@ final class WeatherService: ObservableObject {
                 }
                 let decoded = try JSONDecoder().decode(OpenWeatherResponse.self, from: data)
                 self.weather = Weather(
-                    temperature: decoded.main.temp,
-                    windSpeed: decoded.wind.speed,
+                    temperatureCelsius: decoded.main.temp,
+                    windMetersPerSecond: decoded.wind.speed,
                     description: decoded.weather.first?.description.uppercased() ?? "",
                     iconCode: decoded.weather.first?.icon ?? ""
                 )

@@ -38,11 +38,21 @@
 		DF623FC4DD1DC2B371A83081 /* Pods_Snowoboarders.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Snowoboarders.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		96F04BDF2F06CD4900117423 /* Exceptions for "Snowoboarders" folder in "Snowoboarders" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 96F04BDB2F06CD4900117423 /* Snowoboarders */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		96F04BDE2F06CD4900117423 /* Snowoboarders */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				96F04BDF2F06CD4900117423 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+				96F04BDF2F06CD4900117423 /* Exceptions for "Snowoboarders" folder in "Snowoboarders" target */,
 			);
 			path = Snowoboarders;
 			sourceTree = "<group>";
@@ -58,16 +68,6 @@
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		96F04BDF2F06CD4900117423 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 96F04BDB2F06CD4900117423 /* Snowoboarders */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		96F04BD92F06CD4900117423 /* Frameworks */ = {
@@ -465,11 +465,11 @@
 				DEVELOPMENT_TEAM = JKQQJ48844;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Snowoboarders/Info.plist;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs, including while the app is in the background.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_FILE = Snowoboarders/Info.plist;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -502,11 +502,11 @@
 				DEVELOPMENT_TEAM = JKQQJ48844;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Snowoboarders/Info.plist;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs, including while the app is in the background.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_FILE = Snowoboarders/Info.plist;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wdth,wght@75,600;75,700;75,800&display=swap"><style>body{margin:0;background:#E9E6E3;font-family:'Open Sans',sans-serif;font-stretch:75%}a{color:#ED213D}a:hover{color:#B8132B}@keyframes v3pulse{0%,100%{opacity:1}50%{opacity:.25}}</style></helmet>
+<div style="min-height:100vh;display:flex;flex-wrap:wrap;gap:48px;align-items:center;justify-content:center;padding:40px;box-sizing:border-box;font-stretch:75%;color:#353535">
+<div style="max-width:300px;display:flex;flex-direction:column;gap:14px">
+<div style="font:700 13px/1 'Open Sans',sans-serif;font-stretch:75%;letter-spacing:.12em;color:#ED213D">SNOWBOARDER · V5</div>
+<div style="font:800 34px/1.02 'Open Sans',sans-serif;font-stretch:75%">Map-first Track with floating cards, in the v1 palette.</div>
+<div style="font:600 15px/1.45 'Open Sans',sans-serif;font-stretch:75%;color:#6b6b6b;text-wrap:pretty">Weather and friends float over the map in white; the stats card and Start button sit above a floating tab bar. The MK avatar opens Settings. Stats and Settings keep the red header from v3.</div>
+</div>
+
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+<div style="position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;overflow:hidden;font-family:'Open Sans',sans-serif;font-stretch:75%;color:#353535">
+
+<sc-if value="{{ isTrack }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;position:relative;background:#141B24;overflow:hidden">
+<div onPointerDown="{{ mapDown }}" onPointerMove="{{ mapMove }}" onPointerUp="{{ mapUp }}" onPointerCancel="{{ mapUp }}" style="position:absolute;inset:0;touch-action:none;cursor:grab">
+<div style="position:absolute;inset:-400px;transform:{{ mapTransform }};transition:{{ mapTransition }}">
+<div style="position:absolute;left:400px;top:400px;width:402px;height:874px">
+<svg width="100%" height="100%" style="position:absolute;inset:0"><defs><pattern id="m4a" width="10" height="10" patternTransform="rotate(32)" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#141B24"></rect><rect width="3" height="10" fill="#19222D"></rect></pattern></defs><rect width="100%" height="100%" fill="url(#m4a)"></rect><path d="M 300 150 C 250 210 320 250 250 290 S 160 320 190 370" fill="none" stroke="#ED213D" stroke-width="4" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="{{ trackOffset }}"></path></svg>
+<div style="position:absolute;top:250px;left:0;right:0;text-align:center;font:700 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.18em;color:rgba(255,255,255,.22)">MAPBOX DARK</div>
+<div style="position:absolute;left:180px;top:359px;width:22px;height:22px;border-radius:50%;background:#1A7CFF;border:3px solid #fff;box-sizing:border-box;box-shadow:0 0 0 14px rgba(46,110,200,.22)"></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;top:62px;left:14px;right:14px;display:flex;gap:10px">
+<div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:20px;background:#ED213D;box-shadow:0 6px 18px rgba(0,0,0,.35)">
+<div style="width:28px;height:28px;border-radius:50%;background:#FFB340;border:2px solid #fff;box-sizing:border-box;flex:none"></div>
+<div style="min-width:0">
+<div style="font:800 22px/1 'Open Sans',sans-serif;font-stretch:75%;color:#fff">{{ tempStr }}{{ tempUnit }}</div>
+<div style="font:700 13px/1 'Open Sans',sans-serif;font-stretch:75%;color:rgba(255,255,255,.88);letter-spacing:.04em;margin-top:4px;white-space:nowrap">SKY IS CLEAR · WIND {{ windStr }}</div>
+</div>
+</div>
+<div style="flex:none;display:flex;align-items:center;gap:9px;padding:12px 16px;border-radius:20px;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.35)">
+<div style="display:flex"><div style="width:26px;height:26px;border-radius:50%;background:#353535;border:2px solid #fff"></div><div style="width:26px;height:26px;border-radius:50%;background:#8a8a8a;border:2px solid #fff;margin-left:-9px"></div><div style="width:26px;height:26px;border-radius:50%;background:#ED213D;border:2px solid #fff;margin-left:-9px"></div></div>
+<div style="font:800 18px/1 'Open Sans',sans-serif;font-stretch:75%;color:#353535">3</div>
+</div>
+</div>
+<div style="position:absolute;left:12px;right:12px;bottom:104px;display:flex;flex-direction:column;gap:12px">
+<sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ recenter }}" style="align-self:flex-end;width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer"><div style="width:18px;height:18px;border-radius:99px 99px 99px 0;transform:rotate(-45deg);background:#353535;display:flex;align-items:center;justify-content:center"><div style="width:6px;height:6px;border-radius:50%;background:#fff"></div></div></div>
+</sc-if>
+<sc-if value="{{ followOn }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ toggleFollow }}" style="align-self:flex-end;height:52px;padding:0 18px 0 14px;border-radius:26px;background:#ED213D;color:#fff;display:flex;align-items:center;gap:9px;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer" style-active="filter:brightness(.92)">
+<svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2 L17 17 L10 13.5 L3 17 Z" fill="#fff"></path></svg>
+<div style="font:700 17px/1 'Open Sans',sans-serif;font-stretch:75%">FOLLOWING</div>
+</div>
+</sc-if>
+<sc-if value="{{ followOff }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ toggleFollow }}" style="align-self:flex-end;height:52px;padding:0 18px 0 14px;border-radius:26px;background:#fff;color:#ED213D;display:flex;align-items:center;gap:9px;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer" style-active="background:#F2F2F2">
+<svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2 L17 17 L10 13.5 L3 17 Z" fill="none" stroke="#ED213D" stroke-width="2" stroke-linejoin="round"></path></svg>
+<div style="font:700 17px/1 'Open Sans',sans-serif;font-stretch:75%">FOLLOW ME</div>
+</div>
+</sc-if>
+<div style="padding:20px 18px 16px;border-radius:28px;background:#fff;box-shadow:0 14px 40px rgba(0,0,0,.45)">
+<sc-if value="{{ tracking }}" hint-placeholder-val="{{ false }}">
+<div style="margin-bottom:14px">
+<div style="display:flex;align-items:center;gap:8px;font:700 14px/1 'Open Sans',sans-serif;font-stretch:75%;color:#ED213D;letter-spacing:.04em"><div style="width:9px;height:9px;border-radius:50%;background:#ED213D;animation:v3pulse 1.4s infinite"></div>{{ recLabel }} · {{ durStr }}</div>
+<div style="display:flex;align-items:flex-end;gap:8px;margin-top:6px"><div style="font:800 80px/.9 'Open Sans',sans-serif;font-stretch:75%;letter-spacing:-.02em;color:#353535;font-variant-numeric:tabular-nums">{{ speedStr }}</div><div style="font:700 20px/1 'Open Sans',sans-serif;font-stretch:75%;color:#8a8a8a;padding-bottom:8px">{{ speedUnit }}</div></div>
+</div>
+</sc-if>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="3"><div style="min-width:0"><div style="font:700 13px/1 'Open Sans',sans-serif;font-stretch:75%;color:#8a8a8a;letter-spacing:.04em">{{ s.label }}</div><div style="font:800 28px/1.05 'Open Sans',sans-serif;font-stretch:75%;color:#353535;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap">{{ s.value }}</div></div></sc-for>
+</div>
+<div style="display:flex;gap:10px">
+<sc-if value="{{ tracking }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ pause }}" style="flex:1;height:68px;border-radius:20px;background:#F2F2F2;color:#4D4D4D;display:flex;align-items:center;justify-content:center;cursor:pointer" style-active="filter:brightness(.95)"><div style="font:700 22px/1 'Open Sans',sans-serif;font-stretch:75%">{{ pauseLabel }}</div></div>
+</sc-if>
+<div onClick="{{ toggle }}" style="flex:1.4;height:68px;border-radius:20px;background:#ED213D;color:#fff;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;box-shadow:0 8px 20px rgba(237,33,61,.3)" style-active="filter:brightness(.92)">
+<div style="width:16px;height:16px;border-radius:{{ ctaDotRadius }};background:#fff"></div>
+<div style="font:700 22px/1 'Open Sans',sans-serif;font-stretch:75%">{{ ctaLabel }}</div>
+</div>
+</div>
+<sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}">
+<div style="text-align:center;font:700 12px/1 'Open Sans',sans-serif;font-stretch:75%;color:#8a8a8a;letter-spacing:.08em;margin-top:12px">GPS LOCKED · 11 SATELLITES</div>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isStats }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+<div style="flex:none;background:#ED213D;color:#fff;padding:62px 20px 22px">
+<div style="font:700 18px/1 'Open Sans',sans-serif;font-stretch:75%;letter-spacing:.04em">2025/26 SEASON · 41 DAYS</div>
+<div style="display:flex;align-items:flex-end;gap:10px;margin-top:8px"><div style="font:800 88px/.9 'Open Sans',sans-serif;font-stretch:75%;letter-spacing:-.02em">{{ totalDistNum }}</div><div style="font:700 20px/1.25 'Open Sans',sans-serif;font-stretch:75%;padding-bottom:8px">{{ distUnit }} RIDDEN<br>{{ totalMax }} TOP SPEED</div></div>
+</div>
+<div style="flex:1;overflow:auto;padding-bottom:110px">
+<sc-for list="{{ sessions }}" as="d" hint-placeholder-count="5">
+<div onClick="{{ d.open }}" style="height:78px;display:flex;align-items:center;gap:14px;padding:0 16px 0 18px;border-bottom:1px solid #E8E8E8;cursor:pointer" style-active="background:#F2F2F2">
+<div style="font:700 40px/1 'Open Sans',sans-serif;font-stretch:75%;width:44px;text-align:right">{{ d.day }}</div>
+<div style="display:flex;flex-direction:column;gap:3px;width:40px"><div style="font:700 14px/1 'Open Sans',sans-serif;font-stretch:75%;color:#ED213D">{{ d.mon }}</div><div style="font:600 13px/1 'Open Sans',sans-serif;font-stretch:75%;color:#8a8a8a">{{ d.year }}</div></div>
+<div style="flex:1;min-width:0"><div style="font:700 18px/1.1 'Open Sans',sans-serif;font-stretch:75%">{{ d.place }}</div><div style="font:600 14px/1.2 'Open Sans',sans-serif;font-stretch:75%;color:#8a8a8a;margin-top:3px">{{ d.dist }} · {{ d.max }}</div></div>
+<div style="width:10px;height:10px;border-top:2.5px solid #bdbdbd;border-right:2.5px solid #bdbdbd;transform:rotate(45deg);margin-right:4px"></div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDay }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+<div style="flex:none;background:#ED213D;color:#fff;padding:58px 20px 22px">
+<div onClick="{{ goStats }}" style="display:flex;align-items:center;gap:8px;height:34px;cursor:pointer;margin-left:-4px"><div style="width:11px;height:11px;border-bottom:3px solid #fff;border-left:3px solid #fff;transform:rotate(45deg)"></div><div style="font:700 16px/1 'Open Sans',sans-serif;font-stretch:75%">STATS</div></div>
+<div style="font:700 18px/1 'Open Sans',sans-serif;font-stretch:75%;letter-spacing:.04em;margin-top:8px">{{ day.place }} · {{ day.day }} {{ day.mon }} · {{ day.start }}–{{ day.end }}</div>
+<div style="display:flex;align-items:flex-end;gap:10px;margin-top:6px"><div style="font:800 88px/.9 'Open Sans',sans-serif;font-stretch:75%;letter-spacing:-.02em">{{ day.distNum }}</div><div style="font:700 20px/1.25 'Open Sans',sans-serif;font-stretch:75%;padding-bottom:8px">{{ distUnit }}<br>{{ day.max }} MAX</div></div>
+</div>
+<div style="flex:1;min-height:0;position:relative;background:#141B24;overflow:hidden">
+<svg width="100%" height="100%" style="position:absolute;inset:0"><defs><pattern id="m3b" width="10" height="10" patternTransform="rotate(32)" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#141B24"></rect><rect width="3" height="10" fill="#19222D"></rect></pattern></defs><rect width="100%" height="100%" fill="url(#m3b)"></rect><path d="M 310 30 C 260 80 330 110 250 150 S 150 170 175 220 C 190 250 120 260 90 290" fill="none" stroke="#ED213D" stroke-width="4" stroke-linecap="round"></path><circle cx="310" cy="30" r="6" fill="#fff" stroke="#ED213D" stroke-width="3"></circle><circle cx="90" cy="290" r="6" fill="#ED213D" stroke="#fff" stroke-width="3"></circle></svg>
+<div style="position:absolute;top:14px;left:14px;font:700 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.18em;color:rgba(255,255,255,.28)">MAPBOX DARK</div>
+</div>
+<div style="flex:none;display:flex;gap:10px;padding:14px 16px 106px">
+<div style="flex:1;height:64px;border-radius:18px;background:#F2F2F2;color:#4D4D4D;display:flex;align-items:center;justify-content:center;cursor:pointer" style-active="filter:brightness(.95)"><div style="font:700 22px/1 'Open Sans',sans-serif;font-stretch:75%">SHARE</div></div>
+<div style="flex:1;height:64px;border-radius:18px;background:#ED213D;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-active="filter:brightness(.92)"><div style="font:700 22px/1 'Open Sans',sans-serif;font-stretch:75%">EXPORT</div></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+<div style="flex:none;background:#ED213D;color:#fff;padding:62px 20px 24px"><div style="font:800 40px/1 'Open Sans',sans-serif;font-stretch:75%">SETTINGS</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:72px;border-bottom:1px solid #E8E8E8">
+<div style="font:700 18px/1 'Open Sans',sans-serif;font-stretch:75%">UNITS</div>
+<div style="display:flex;border-radius:10px;overflow:hidden;border:1.5px solid #353535">
+<div onClick="{{ setMetric }}" style="padding:12px 16px;font:700 15px/1 'Open Sans',sans-serif;font-stretch:75%;cursor:pointer;background:{{ metricBg }};color:{{ metricColor }}">METRIC</div>
+<div onClick="{{ setImperial }}" style="padding:12px 16px;font:700 15px/1 'Open Sans',sans-serif;font-stretch:75%;cursor:pointer;background:{{ imperialBg }};color:{{ imperialColor }}">IMPERIAL</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:72px;border-bottom:1px solid #E8E8E8;cursor:pointer" style-active="background:#F2F2F2">
+<div style="font:700 18px/1 'Open Sans',sans-serif;font-stretch:75%">ABOUT SNOWBOARDER</div>
+<div style="width:10px;height:10px;border-top:2.5px solid #bdbdbd;border-right:2.5px solid #bdbdbd;transform:rotate(45deg);margin-right:4px"></div>
+</div>
+</div>
+</sc-if>
+
+<div style="position:absolute;left:14px;right:14px;bottom:30px;height:62px;z-index:20;display:flex;align-items:center;gap:6px;padding:0 8px;border-radius:26px;background:#ED213D;box-sizing:border-box;box-shadow:0 10px 30px rgba(0,0,0,.3)">
+<div onClick="{{ goTrack }}" style="flex:1;height:46px;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;background:{{ trackTabBg }}">
+<div style="width:18px;height:18px;border-radius:50%;border:2.5px solid {{ trackTab }};box-sizing:border-box;display:flex;align-items:center;justify-content:center"><div style="width:6px;height:6px;border-radius:50%;background:{{ trackTab }}"></div></div>
+<div style="font:700 16px/1 'Open Sans',sans-serif;font-stretch:75%;color:{{ trackTab }}">TRACK</div>
+</div>
+<div onClick="{{ goStats }}" style="flex:1;height:46px;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;background:{{ statsTabBg }}">
+<div style="height:16px;display:flex;align-items:flex-end;gap:2.5px"><div style="width:3.5px;height:8px;border-radius:1px;background:{{ statsTab }}"></div><div style="width:3.5px;height:16px;border-radius:1px;background:{{ statsTab }}"></div><div style="width:3.5px;height:11px;border-radius:1px;background:{{ statsTab }}"></div></div>
+<div style="font:700 16px/1 'Open Sans',sans-serif;font-stretch:75%;color:{{ statsTab }}">STATS</div>
+</div>
+<div onClick="{{ goSettings }}" style="width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;background:{{ settingsTabBg }};box-shadow:{{ settingsRing }};font:800 15px/1 'Open Sans',sans-serif;font-stretch:75%;color:#fff">MK</div>
+</div>
+</div>
+</x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;track&quot;,&quot;stats&quot;,&quot;day&quot;,&quot;settings&quot;],&quot;default&quot;:&quot;track&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;units&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;metric&quot;,&quot;imperial&quot;],&quot;default&quot;:&quot;metric&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { screen: null, follow: true, panX: 0, panY: 0, dragging: false, mode: 'idle', t: 0, dist: 0, max: 0, speed: 0, alt: 614, units: null, dayIdx: 0 };
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (this.state.mode !== 'riding') return;
+      this.setState(s => {
+        const sp = Math.max(0, 36 + Math.sin(s.t / 3) * 13 + Math.random() * 5);
+        return { t: s.t + 1, speed: sp, dist: s.dist + sp / 3600, max: Math.max(s.max, sp), alt: s.alt - 3 };
+      });
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const s = this.state;
+    const screen = s.screen || this.props.startScreen || 'track';
+    const imp = (s.units || this.props.units) === 'imperial';
+    const live = s.mode !== 'idle';
+    const cv = v => imp ? v * 0.621 : v;
+    const km = v => cv(v).toFixed(2) + (imp ? ' mi' : ' km');
+    const spd = v => cv(v).toFixed(1) + (imp ? ' MPH' : ' KM/H');
+    const dur = t => [t / 3600, (t / 60) % 60, t % 60].map(n => String(Math.floor(n)).padStart(2, '0')).join(':');
+    const start = () => this.setState({ mode: 'riding', t: 0, dist: 0, max: 0, speed: 0, alt: 614, follow: true, panX: 0, panY: 0 });
+    const stop = () => this.setState({ mode: 'idle', speed: 0 });
+    const go = sc => () => this.setState({ screen: sc });
+    const raw = [
+      { day: '17', mon: 'MAR', year: '2026', place: 'Borovets', d: 38.1, m: 71.4, start: '09:12', end: '15:40' },
+      { day: '14', mon: 'MAR', year: '2026', place: 'Bansko', d: 52.7, m: 78.9, start: '08:48', end: '16:05' },
+      { day: '09', mon: 'MAR', year: '2026', place: 'Pamporovo', d: 24.3, m: 58.2, start: '10:20', end: '14:15' },
+      { day: '02', mon: 'MAR', year: '2026', place: 'Bansko', d: 44.9, m: 66.0, start: '09:01', end: '15:22' },
+      { day: '22', mon: 'FEB', year: '2026', place: 'Vitosha', d: 18.6, m: 52.3, start: '11:10', end: '14:02' }
+    ];
+    const sessions = raw.map((r, i) => ({ ...r, dist: km(r.d), distNum: cv(r.d).toFixed(1), max: spd(r.m), open: () => this.setState({ screen: 'day', dayIdx: i }) }));
+    const tab = screen === 'day' ? 'stats' : screen;
+    const red = '#ED213D', grey = '#8a8a8a';
+    return {
+      isTrack: screen === 'track', isStats: screen === 'stats', isDay: screen === 'day', isSettings: screen === 'settings',
+      idle: !live, tracking: live,
+      tempStr: imp ? '58.5°' : '14.7°', tempUnit: imp ? 'F' : 'C', windStr: imp ? '1 MPH' : '2 KM/H',
+      speedStr: cv(s.speed).toFixed(0), speedUnit: imp ? 'MPH' : 'KM/H',
+      followOn: live && s.follow, followOff: live && !s.follow,
+      mapTransform: 'translate(' + s.panX + 'px,' + s.panY + 'px)',
+      mapTransition: s.dragging ? 'none' : 'transform .45s cubic-bezier(.2,.8,.2,1)',
+      recenter: () => this.setState({ panX: 0, panY: 0 }),
+      toggleFollow: () => this.setState(p => p.follow ? { follow: false } : { follow: true, panX: 0, panY: 0 }),
+      mapDown: e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {} this.drag = { x: e.clientX - this.state.panX, y: e.clientY - this.state.panY }; this.setState({ dragging: true, follow: false }); },
+      mapMove: e => { if (!this.drag) return; this.setState({ panX: e.clientX - this.drag.x, panY: e.clientY - this.drag.y }); },
+      mapUp: () => { this.drag = null; this.setState({ dragging: false }); },
+      recLabel: s.mode === 'paused' ? 'PAUSED' : 'RECORDING',
+      durStr: dur(s.t),
+      stats: [
+        { label: 'DISTANCE', value: km(s.dist) },
+        { label: 'MAX SPEED', value: cv(s.max).toFixed(1) + (imp ? ' mph' : '') },
+        { label: 'ALTITUDE', value: Math.round(imp ? s.alt * 3.281 : s.alt) + (imp ? ' ft' : ' m') }
+      ],
+      trackOffset: live ? Math.max(0, 300 - s.t * 10) : 300,
+      toggle: () => live ? stop() : start(),
+      pause: () => this.setState(p => ({ mode: p.mode === 'paused' ? 'riding' : 'paused' })),
+      pauseLabel: s.mode === 'paused' ? 'RESUME' : 'PAUSE',
+      ctaLabel: live ? 'STOP' : 'START TRACKING',
+      ctaDotRadius: live ? '3px' : '50%',
+      totalDistNum: cv(178.6).toFixed(0), distUnit: imp ? 'MI' : 'KM', totalMax: spd(78.9),
+      sessions, day: sessions[s.dayIdx],
+      trackTab: tab === 'track' ? '#fff' : 'rgba(255,255,255,.78)', statsTab: tab === 'stats' ? '#fff' : 'rgba(255,255,255,.78)',
+      trackTabBg: tab === 'track' ? 'rgba(0,0,0,.2)' : 'transparent', statsTabBg: tab === 'stats' ? 'rgba(0,0,0,.2)' : 'transparent',
+      settingsTabBg: '#353535', settingsRing: tab === 'settings' ? '0 0 0 2px #ED213D, 0 0 0 4px #fff' : 'none',
+      goTrack: go('track'), goStats: go('stats'), goSettings: go('settings'),
+      metricBg: imp ? '#fff' : '#353535', metricColor: imp ? '#353535' : '#fff',
+      imperialBg: imp ? '#353535' : '#fff', imperialColor: imp ? '#fff' : '#353535',
+      setMetric: () => this.setState({ units: 'metric' }), setImperial: () => this.setState({ units: 'imperial' })
+    };
+  }
+}
+</script>
+</body>
+</html>

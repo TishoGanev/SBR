@@ -6,5 +6,15 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>OpenSans-CondensedSemiBold.ttf</string>
+		<string>OpenSans-CondensedBold.ttf</string>
+		<string>OpenSans-CondensedExtraBold.ttf</string>
+	</array>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>
