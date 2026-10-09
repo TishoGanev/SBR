@@ -9,7 +9,7 @@ def shared_pods
 #    pod 'BonMot'
 #    pod 'ATMHud@dhoerl'
 #    pod 'FBSDKCoreKit'
-#    pod 'FBSDKLoginKit'
+    pod 'FBSDKLoginKit'
 #    pod 'FBSDKShareKit'
 #    pod 'Fabric'
 #    pod 'Crashlytics'
@@ -19,6 +19,10 @@ def shared_pods
 end
 target 'Snowoboarders' do
   shared_pods
+
+  target 'SnowoboardersTests' do
+    inherit! :search_paths
+  end
 end
 
 post_install do |installer|

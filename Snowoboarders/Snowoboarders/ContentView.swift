@@ -5,6 +5,8 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
+import FBSDKCoreKit
 
 enum AppTab {
     case track, stats, settings
@@ -14,7 +16,8 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var tracker = LocationTracker()
     @StateObject private var weatherService = WeatherService()
-    @AppStorage("userInitials") private var userInitials = "SB"
+    @StateObject private var auth = AuthStore()
+    @StateObject private var friends = FriendsStore()
 
     @State private var tab: AppTab = .track
     @State private var statsPath = NavigationPath()
@@ -30,7 +33,7 @@ struct ContentView: View {
 
             FloatingTabBar(
                 selection: tab,
-                initials: userInitials,
+                initials: auth.user?.initials ?? "SB",
                 onTrack: { tab = .track },
                 onStats: {
                     if tab == .stats { statsPath = NavigationPath() }
@@ -47,6 +50,8 @@ struct ContentView: View {
         .ignoresSafeArea(edges: .bottom)
         .environmentObject(tracker)
         .environmentObject(weatherService)
+        .environmentObject(auth)
+        .environmentObject(friends)
         .preferredColorScheme(.light)
         .onAppear {
             tracker.configure(context: modelContext)
@@ -56,6 +61,54 @@ struct ContentView: View {
         .onChange(of: tracker.hasFixedLocation) { _, hasFix in
             if hasFix { weatherService.refresh(location: tracker.currentLocation) }
         }
+        .sheet(isPresented: $auth.isShowingSignIn, onDismiss: joinPendingInvite) {
+            SignInSheet()
+                .environmentObject(auth)
+        }
+        .sheet(isPresented: $friends.isShowingRideTogether, onDismiss: {
+            friends.justJoined = nil
+            friends.joinError = nil
+        }) {
+            RideTogetherSheet()
+                .environmentObject(friends)
+        }
+        .onOpenURL(perform: handle)
+        .task(id: auth.user?.id) {
+            friends.setRider(auth.user)
+            if auth.isSignedIn {
+                await auth.verifyAppleCredential()
+                await friends.refresh()
+            }
+        }
+    }
+
+    private func handle(_ url: URL) {
+        if url.scheme == InviteLink.scheme {
+            tab = .track
+            if auth.isSignedIn {
+                friends.isShowingRideTogether = true
+                Task { await friends.join(url.absoluteString) }
+            } else {
+                friends.pendingInvite = url.absoluteString
+                auth.isShowingSignIn = true
+            }
+        } else if AuthStore.isFacebookConfigured {
+            // Facebook returns here after login in its app or in Safari.
+            ApplicationDelegate.shared.application(
+                UIApplication.shared,
+                open: url,
+                sourceApplication: nil,
+                annotation: [UIApplication.OpenURLOptionsKey.annotation]
+            )
+        }
+    }
+
+    /// Joins a scanned invite once the sign-in sheet it opened has gone away.
+    private func joinPendingInvite() {
+        guard auth.isSignedIn, let invite = friends.pendingInvite else { return }
+        friends.pendingInvite = nil
+        friends.isShowingRideTogether = true
+        Task { await friends.join(invite) }
     }
 
     /// Every tab stays alive so the map camera and each navigation stack keep their state.

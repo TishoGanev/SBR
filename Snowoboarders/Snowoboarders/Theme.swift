@@ -84,6 +84,38 @@ struct PressableStyle: ButtonStyle {
     }
 }
 
+/// The design's segmented control: 1.5 pt charcoal border, selected segment filled charcoal.
+struct SBSegmentedControl<Value: Hashable>: View {
+    let options: [(title: String, value: Value)]
+    @Binding var selection: Value
+    var fillsWidth = false
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(options, id: \.value) { option in
+                let selected = option.value == selection
+                Button { selection = option.value } label: {
+                    Text(option.title)
+                        .font(.sb(15))
+                        .cssLineHeight(1, fontSize: 15)
+                        .foregroundStyle(selected ? Color.white : Color.sbCharcoal)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .frame(maxWidth: fillsWidth ? .infinity : nil)
+                        .background(selected ? Color.sbCharcoal : Color.white)
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Color.sbCharcoal, lineWidth: 1.5)
+        )
+    }
+}
+
 /// Right-pointing chevron drawn like the design's rotated two-border square.
 struct Chevron: View {
     var color: Color = .sbChevron

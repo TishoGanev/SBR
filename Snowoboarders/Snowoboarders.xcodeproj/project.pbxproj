@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		81262522513165A3BAD9D6D0 /* Pods_Snowoboarders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DF623FC4DD1DC2B371A83081 /* Pods_Snowoboarders.framework */; };
 		96F04C0E2F06CD8F00117423 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 96F04C0D2F06CD8F00117423 /* Podfile */; };
+		E22926F038630DF258532B92 /* Pods_SnowoboardersTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A3530C182AFCBDCB83299A4 /* Pods_SnowoboardersTests.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +30,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A3530C182AFCBDCB83299A4 /* Pods_SnowoboardersTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SnowoboardersTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4023D9E15E9309E2BABE5E0D /* Pods-SnowoboardersTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SnowoboardersTests.release.xcconfig"; path = "Target Support Files/Pods-SnowoboardersTests/Pods-SnowoboardersTests.release.xcconfig"; sourceTree = "<group>"; };
+		5EC8E7A12F0F000100A1B2C3 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		96F04BDC2F06CD4900117423 /* Snowoboarders.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snowoboarders.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		96F04BEE2F06CD4A00117423 /* SnowoboardersTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnowoboardersTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		96F04BF82F06CD4A00117423 /* SnowoboardersUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnowoboardersUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -36,6 +40,7 @@
 		C8FB4419A86F419150976B1D /* Pods-Snowoboarders.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Snowoboarders.release.xcconfig"; path = "Target Support Files/Pods-Snowoboarders/Pods-Snowoboarders.release.xcconfig"; sourceTree = "<group>"; };
 		CF5AABF66470C64D248229D9 /* Pods-Snowoboarders.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Snowoboarders.debug.xcconfig"; path = "Target Support Files/Pods-Snowoboarders/Pods-Snowoboarders.debug.xcconfig"; sourceTree = "<group>"; };
 		DF623FC4DD1DC2B371A83081 /* Pods_Snowoboarders.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Snowoboarders.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC17E6FF76C88518DAB157EA /* Pods-SnowoboardersTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SnowoboardersTests.debug.xcconfig"; path = "Target Support Files/Pods-SnowoboardersTests/Pods-SnowoboardersTests.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -82,6 +87,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E22926F038630DF258532B92 /* Pods_SnowoboardersTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,6 +106,8 @@
 			children = (
 				CF5AABF66470C64D248229D9 /* Pods-Snowoboarders.debug.xcconfig */,
 				C8FB4419A86F419150976B1D /* Pods-Snowoboarders.release.xcconfig */,
+				FC17E6FF76C88518DAB157EA /* Pods-SnowoboardersTests.debug.xcconfig */,
+				4023D9E15E9309E2BABE5E0D /* Pods-SnowoboardersTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -108,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				96F04C0D2F06CD8F00117423 /* Podfile */,
+				5EC8E7A12F0F000100A1B2C3 /* Secrets.xcconfig */,
 				96F04BDE2F06CD4900117423 /* Snowoboarders */,
 				96F04BF12F06CD4A00117423 /* SnowoboardersTests */,
 				96F04BFB2F06CD4A00117423 /* SnowoboardersUITests */,
@@ -131,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				DF623FC4DD1DC2B371A83081 /* Pods_Snowoboarders.framework */,
+				0A3530C182AFCBDCB83299A4 /* Pods_SnowoboardersTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -146,6 +156,7 @@
 				96F04BD82F06CD4900117423 /* Sources */,
 				96F04BD92F06CD4900117423 /* Frameworks */,
 				96F04BDA2F06CD4900117423 /* Resources */,
+				42AAE7E68A3DA48DD1B6443F /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -163,6 +174,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 96F04C052F06CD4A00117423 /* Build configuration list for PBXNativeTarget "SnowoboardersTests" */;
 			buildPhases = (
+				45A376367ADF0636C54057C6 /* [CP] Check Pods Manifest.lock */,
 				96F04BEA2F06CD4A00117423 /* Sources */,
 				96F04BEB2F06CD4A00117423 /* Frameworks */,
 				96F04BEC2F06CD4A00117423 /* Resources */,
@@ -271,6 +283,49 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		42AAE7E68A3DA48DD1B6443F /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Snowoboarders/Pods-Snowoboarders-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Snowoboarders/Pods-Snowoboarders-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Snowoboarders/Pods-Snowoboarders-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		45A376367ADF0636C54057C6 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SnowoboardersTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
 		49C038806DAD11D20E214413 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -335,6 +390,7 @@
 /* Begin XCBuildConfiguration section */
 		96F04C002F06CD4A00117423 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5EC8E7A12F0F000100A1B2C3 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -399,6 +455,7 @@
 		};
 		96F04C012F06CD4A00117423 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5EC8E7A12F0F000100A1B2C3 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -460,17 +517,22 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Snowoboarders.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JKQQJ48844;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Snowoboarders/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Snowboarder uses the camera to scan a friend's code so you can ride together.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Snowboarder connects to a nearby friend's phone when you scan their code, so you both know you're riding together.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs, including while the app is in the background.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -497,17 +559,22 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Snowoboarders.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JKQQJ48844;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Snowoboarders/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Snowboarder uses the camera to scan a friend's code so you can ride together.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Snowboarder connects to a nearby friend's phone when you scan their code, so you both know you're riding together.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs, including while the app is in the background.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Snowoboarders uses your location to track your runs on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -530,6 +597,7 @@
 		};
 		96F04C062F06CD4A00117423 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FC17E6FF76C88518DAB157EA /* Pods-SnowoboardersTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -552,6 +620,7 @@
 		};
 		96F04C072F06CD4A00117423 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4023D9E15E9309E2BABE5E0D /* Pods-SnowoboardersTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;

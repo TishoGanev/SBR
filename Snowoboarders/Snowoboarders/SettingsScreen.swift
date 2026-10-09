@@ -12,18 +12,21 @@ enum SettingsRoute: Hashable {
 struct SettingsScreen: View {
     @Binding var path: NavigationPath
     @AppStorage("unitsMetric") private var unitsMetric = true
+    @EnvironmentObject private var auth: AuthStore
 
     var body: some View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 RedTitleHeader(title: "SETTINGS")
 
+                accountRow
+
                 SettingsRow {
                     Text("UNITS")
                         .font(.sb(18))
                         .foregroundStyle(.sbCharcoal)
                     Spacer()
-                    UnitsControl(metric: $unitsMetric)
+                    SBSegmentedControl(options: [("METRIC", true), ("IMPERIAL", false)], selection: $unitsMetric)
                 }
 
                 Button {
@@ -49,6 +52,48 @@ struct SettingsScreen: View {
                 switch route {
                 case .about: AboutScreen()
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var accountRow: some View {
+        if let user = auth.user {
+            SettingsRow {
+                Text(user.initials)
+                    .font(.sbFixed(14))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Color.sbCharcoal, in: Circle())
+                Text(user.displayName.uppercased())
+                    .font(.sb(18))
+                    .foregroundStyle(.sbCharcoal)
+                    .lineLimit(1)
+                Spacer()
+                Button("SIGN OUT") {
+                    Task { await auth.signOut() }
+                }
+                .font(.sb(15))
+                .foregroundStyle(.sbRed)
+                .buttonStyle(PressableStyle())
+            }
+        } else {
+            SettingsRow {
+                Text("ACCOUNT")
+                    .font(.sb(18))
+                    .foregroundStyle(.sbCharcoal)
+                Spacer()
+                Button {
+                    auth.isShowingSignIn = true
+                } label: {
+                    Text("SIGN IN")
+                        .font(.sb(15))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 18)
+                        .frame(height: 40)
+                        .background(Color.sbRed, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(PressableStyle())
             }
         }
     }
@@ -89,36 +134,6 @@ private struct SettingsRowPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(configuration.isPressed ? Color.sbLightGrey : Color.white)
-    }
-}
-
-private struct UnitsControl: View {
-    @Binding var metric: Bool
-
-    var body: some View {
-        HStack(spacing: 0) {
-            segment("METRIC", selected: metric) { metric = true }
-            segment("IMPERIAL", selected: !metric) { metric = false }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color.sbCharcoal, lineWidth: 1.5)
-        )
-    }
-
-    private func segment(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.sb(15))
-                .cssLineHeight(1, fontSize: 15)
-                .foregroundStyle(selected ? Color.white : Color.sbCharcoal)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 16)
-                .background(selected ? Color.sbCharcoal : Color.white)
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 

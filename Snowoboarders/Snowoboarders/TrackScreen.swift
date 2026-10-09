@@ -9,6 +9,8 @@ import MapKit
 struct TrackScreen: View {
     @EnvironmentObject private var tracker: LocationTracker
     @EnvironmentObject private var weatherService: WeatherService
+    @EnvironmentObject private var auth: AuthStore
+    @EnvironmentObject private var friends: FriendsStore
     @AppStorage("unitsMetric") private var unitsMetric = true
 
     @State private var cameraPosition: MapCameraPosition = .userLocation(fallback: .automatic)
@@ -79,8 +81,39 @@ struct TrackScreen: View {
 
     // MARK: - Top chips
 
-    @ViewBuilder
     private var topChips: some View {
+        HStack(spacing: 10) {
+            // The spacer keeps the right-hand chip in place while the weather is still loading.
+            HStack(spacing: 0) {
+                weatherChip
+                Spacer(minLength: 0)
+            }
+            if auth.isSignedIn {
+                Button { friends.isShowingRideTogether = true } label: {
+                    if friends.friends.isEmpty {
+                        PromptChip(title: "RIDE WITH", subtitle: "SOMEONE", centered: true)
+                            .accessibilityLabel("Ride with someone")
+                    } else {
+                        FriendsChip(riding: friends.ridingNow)
+                    }
+                }
+                .buttonStyle(PressableStyle())
+                .frame(maxHeight: .infinity)
+            } else {
+                Button { auth.isShowingSignIn = true } label: {
+                    PromptChip(title: "SIGN IN", subtitle: "SEE YOUR CREW")
+                        .accessibilityLabel("Sign in to see your crew")
+                }
+                .buttonStyle(PressableStyle())
+                .frame(maxHeight: .infinity)
+            }
+        }
+        // Like the design's flex row, the friends chip stretches to the weather chip's height.
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private var weatherChip: some View {
         if let weather = weatherService.weather {
             WeatherChip(weather: weather, units: units)
         } else if let errorMessage = weatherService.errorMessage {
@@ -382,6 +415,74 @@ private struct WeatherChip: View {
                 .foregroundStyle(.white)
                 .frame(width: 28, height: 28)
         }
+    }
+}
+
+/// Two-line call to action in the friends chip's place: sign in, or invite someone to ride.
+private struct PromptChip: View {
+    let title: String
+    let subtitle: String
+    var centered = false
+
+    var body: some View {
+        VStack(alignment: centered ? .center : .leading, spacing: 4) {
+            Text(title)
+                .font(.sb(18, .extraBold))
+                .foregroundStyle(.sbRed)
+                .cssLineHeight(1, fontSize: 18)
+            Text(subtitle)
+                .font(.sb(13))
+                .tracking(13 * 0.04)
+                .foregroundStyle(.sbSecondary)
+                .cssLineHeight(1, fontSize: 13)
+        }
+        .lineLimit(1)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .frame(maxHeight: .infinity)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .sbShadow(y: 6, blur: 18, opacity: 0.35)
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Friends riding right now: up to three overlapping avatars and the count.
+private struct FriendsChip: View {
+    let riding: [Friend]
+
+    var body: some View {
+        HStack(spacing: 9) {
+            if riding.isEmpty {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.sbSecondary)
+                    .frame(height: 26)
+            } else {
+                HStack(spacing: -9) {
+                    ForEach(riding.prefix(3)) { friend in
+                        Circle()
+                            .fill(Color(hex: friend.avatarColor))
+                            .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                            .frame(width: 26, height: 26)
+                    }
+                }
+            }
+            Text("\(riding.count)")
+                .font(.sbFixed(18))
+                .monospacedDigit()
+                .foregroundStyle(.sbCharcoal)
+                .cssLineHeight(1, fontSize: 18)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .frame(maxHeight: .infinity)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .sbShadow(y: 6, blur: 18, opacity: 0.35)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(riding.isEmpty
+            ? "No friends riding"
+            : "\(riding.count) friends riding: \(riding.map(\.displayName).joined(separator: ", "))")
     }
 }
 
