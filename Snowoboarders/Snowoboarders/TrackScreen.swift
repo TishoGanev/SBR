@@ -7,35 +7,38 @@ import SwiftUI
 import MapKit
 
 struct TrackScreen: View {
+    /// The profile button lives in the top bar now, so the Track screen asks to open Settings.
     @EnvironmentObject private var tracker: LocationTracker
-    @EnvironmentObject private var weatherService: WeatherService
-    @EnvironmentObject private var auth: AuthStore
     @EnvironmentObject private var friends: FriendsStore
     @AppStorage("unitsMetric") private var unitsMetric = true
 
     @State private var cameraPosition: MapCameraPosition = .userLocation(fallback: .automatic)
     @State private var lastCamera: MapCamera?
     @State private var follow = false
+    @State private var showingEveryone = false
+    @State private var cardExpanded = false
     @State private var ignoreUserCameraUntil: Date = .distantPast
 
     private var units: Units { Units(metric: unitsMetric) }
     private static let followCamera: MapCameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
 
     var body: some View {
-        ZStack {
-            map
+        GeometryReader { proxy in
+            ZStack {
+                map
 
-            VStack(spacing: 0) {
-                topChips
-                    .padding(.top, 62)
-                    .padding(.horizontal, 14)
-                Spacer(minLength: 0)
-                bottomStack
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 104)
+                VStack(spacing: 0) {
+                    topChips
+                        .padding(.top, proxy.safeAreaInsets.top + 4)
+                        .padding(.horizontal, 14)
+                    Spacer(minLength: 0)
+                    bottomStack
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 104)
+                }
             }
+            .ignoresSafeArea()
         }
-        .ignoresSafeArea()
     }
 
     // MARK: - Map
@@ -45,6 +48,16 @@ struct TrackScreen: View {
             if tracker.trackCoordinates.count > 1 {
                 MapPolyline(coordinates: tracker.trackCoordinates)
                     .stroke(Color.sbRed, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+            }
+            // Riders sit above your track and, being drawn first, below your own dot; the bottom tip of each tag is their position.
+            ForEach(sharedFriends) { friend in
+                if let coordinate = friend.coordinate {
+                    Annotation("", coordinate: coordinate, anchor: .bottom) {
+                        RiderTag(friend: friend, units: units, compact: compactMarkers)
+                            .onTapGesture { centerOn(friend) }
+                    }
+                    .annotationTitles(.hidden)
+                }
             }
             if let location = tracker.currentLocation {
                 Annotation("", coordinate: location.coordinate, anchor: .center) {
@@ -75,6 +88,7 @@ struct TrackScreen: View {
     }
 
     private func userMovedMap() {
+        showingEveryone = false
         guard follow else { return }
         stopFollowing()
     }
@@ -83,48 +97,10 @@ struct TrackScreen: View {
 
     private var topChips: some View {
         HStack(spacing: 10) {
-            // The spacer keeps the right-hand chip in place while the weather is still loading.
-            HStack(spacing: 0) {
-                weatherChip
-                Spacer(minLength: 0)
+            Button { friends.isShowingRideTogether = true } label: {
+                CrewPill(friends: friends.friends)
             }
-            if auth.isSignedIn {
-                Button { friends.isShowingRideTogether = true } label: {
-                    if friends.friends.isEmpty {
-                        PromptChip(title: "RIDE WITH", subtitle: "SOMEONE", centered: true)
-                            .accessibilityLabel("Ride with someone")
-                    } else {
-                        FriendsChip(riding: friends.ridingNow)
-                    }
-                }
-                .buttonStyle(PressableStyle())
-                .frame(maxHeight: .infinity)
-            } else {
-                Button { auth.isShowingSignIn = true } label: {
-                    PromptChip(title: "SIGN IN", subtitle: "SEE YOUR CREW")
-                        .accessibilityLabel("Sign in to see your crew")
-                }
-                .buttonStyle(PressableStyle())
-                .frame(maxHeight: .infinity)
-            }
-        }
-        // Like the design's flex row, the friends chip stretches to the weather chip's height.
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    @ViewBuilder
-    private var weatherChip: some View {
-        if let weather = weatherService.weather {
-            WeatherChip(weather: weather, units: units)
-        } else if let errorMessage = weatherService.errorMessage {
-            #if DEBUG
-            Text(errorMessage)
-                .font(.sb(12))
-                .foregroundStyle(.white)
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.sbCharcoal, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            #endif
+            .buttonStyle(PressableStyle())
         }
     }
 
@@ -132,8 +108,11 @@ struct TrackScreen: View {
 
     private var bottomStack: some View {
         VStack(alignment: .trailing, spacing: 12) {
+            if !sharedFriends.isEmpty {
+                showEveryoneButton
+            }
             mapButton
-            statsCard
+            card
         }
     }
 
@@ -142,41 +121,148 @@ struct TrackScreen: View {
         if !tracker.isTracking {
             Button(action: recenter) {
                 LocationPin()
-                    .frame(width: 52, height: 52)
+                    .frame(width: 48, height: 48)
                     .background(Color.white, in: Circle())
-                    .sbShadow(y: 6, blur: 18, opacity: 0.35)
+                    .sbShadow(y: 4, blur: 14, opacity: 0.35)
             }
             .buttonStyle(PressableStyle())
             .accessibilityLabel("Re-centre map")
-        } else if follow {
-            followPill(title: "FOLLOWING", filled: true) { stopFollowing() }
         } else {
-            followPill(title: "FOLLOW ME", filled: false) { startFollowing() }
+            Button { follow ? stopFollowing() : startFollowing() } label: {
+                NavigationArrow(filled: follow)
+                    .frame(width: 20, height: 20)
+                    .frame(width: 48, height: 48)
+                    .background(follow ? Color.sbRed : Color.white, in: Circle())
+                    .sbShadow(y: 4, blur: 14, opacity: 0.35)
+            }
+            .buttonStyle(PressableStyle())
+            .accessibilityLabel(follow ? "Stop following" : "Follow me")
+            .accessibilityAddTraits(follow ? .isSelected : [])
         }
     }
 
-    private func followPill(title: String, filled: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 9) {
-                NavigationArrow(filled: filled)
-                    .frame(width: 20, height: 20)
-                Text(title)
-                    .font(.sb(17))
-                    .cssLineHeight(1, fontSize: 17)
-            }
-            .foregroundStyle(filled ? Color.white : Color.sbRed)
-            .padding(.leading, 14)
-            .padding(.trailing, 18)
-            .frame(height: 52)
-            .background(filled ? Color.sbRed : Color.white, in: Capsule())
-            .sbShadow(y: 6, blur: 18, opacity: 0.35)
+    /// While recording, the compact card keeps the map visible; the grabber opens the full one.
+    @ViewBuilder
+    private var card: some View {
+        if tracker.isTracking && !cardExpanded {
+            compactCard
+        } else {
+            statsCard
         }
-        .buttonStyle(PressableStyle())
+    }
+
+    private var grabber: some View {
+        Capsule()
+            .fill(Color(hex: 0xD6D6D6))
+            .frame(width: 36, height: 4)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle().inset(by: -20))
+            .onTapGesture { setCardExpanded(!cardExpanded) }
+            .gesture(
+                DragGesture(minimumDistance: 8).onEnded { value in
+                    if value.translation.height < -16 { setCardExpanded(true) }
+                    if value.translation.height > 16 { setCardExpanded(false) }
+                }
+            )
+            .accessibilityLabel(cardExpanded ? "Show less" : "Show more")
+            .accessibilityAddTraits(.isButton)
+    }
+
+    private func setCardExpanded(_ expanded: Bool) {
+        withAnimation(.easeOut(duration: 0.25)) { cardExpanded = expanded }
+    }
+
+    private var compactCard: some View {
+        VStack(spacing: 10) {
+            grabber
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        PulsingDot(size: 7, pulses: !tracker.isPaused)
+                        Text(tracker.isPaused ? "PAUSED" : "RECORDING · \(units.duration(tracker.elapsed))")
+                            .font(.sb(12))
+                            .tracking(12 * 0.04)
+                            .monospacedDigit()
+                            .cssLineHeight(1, fontSize: 12)
+                    }
+                    .foregroundStyle(.sbRed)
+
+                    HStack(alignment: .lastTextBaseline, spacing: 5) {
+                        Text(String(format: "%.0f", tracker.isPaused ? 0 : units.speedValue(metersPerSecond: tracker.currentSpeed)))
+                            .font(.sbFixed(44))
+                            .monospacedDigit()
+                            .foregroundStyle(.sbCharcoal)
+                            .cssLineHeight(1, fontSize: 44)
+                        Text(units.speedUnit)
+                            .font(.sb(15))
+                            .foregroundStyle(.sbSecondary)
+                    }
+                }
+                Spacer(minLength: 0)
+
+                Button(action: togglePause) {
+                    Image(systemName: tracker.isPaused ? "play.fill" : "pause.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.sbGreyButtonText)
+                        .frame(width: 52, height: 52)
+                        .background(Color.sbLightGrey, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(PressableStyle(pressedBrightness: -0.05))
+                .accessibilityLabel(tracker.isPaused ? "Resume" : "Pause")
+
+                Button(action: stopTracking) {
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 3).fill(.white).frame(width: 13, height: 13)
+                        Text("STOP").font(.sb(18))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18)
+                    .frame(height: 52)
+                    .background(Color.sbRed, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .sbShadow(y: 6, blur: 16, opacity: 0.3, color: .sbRed)
+                }
+                .buttonStyle(PressableStyle())
+            }
+
+            VStack(spacing: 10) {
+                Rectangle().fill(Color(hex: 0xEFEFEF)).frame(height: 1)
+                HStack(alignment: .top, spacing: 12) {
+                    compactStat("DISTANCE", units.distance(meters: tracker.traveledDistance))
+                    compactStat("MAX SPEED", maxSpeedValue)
+                    compactStat("ALTITUDE", altitudeValue)
+                }
+            }
+        }
+        .padding(.top, 8)
+        .padding(.horizontal, 14)
+        .padding(.bottom, 14)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .sbShadow(y: 14, blur: 40, opacity: 0.45)
+    }
+
+    private func compactStat(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.sb(11))
+                .foregroundStyle(.sbSecondary)
+                .cssLineHeight(1, fontSize: 11)
+            Text(value)
+                .font(.sbFixed(20))
+                .monospacedDigit()
+                .foregroundStyle(.sbCharcoal)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .cssLineHeight(1.05, fontSize: 20)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var statsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             if tracker.isTracking {
+                grabber
+                    .padding(.bottom, 12)
                 liveHeader
                     .padding(.bottom, 14)
             }
@@ -200,7 +286,7 @@ struct TrackScreen: View {
                     .padding(.top, 12)
             }
         }
-        .padding(.top, 20)
+        .padding(.top, tracker.isTracking ? 8 : 20)
         .padding(.horizontal, 18)
         .padding(.bottom, 16)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -211,7 +297,7 @@ struct TrackScreen: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 PulsingDot()
-                Text("\(tracker.isPaused ? "PAUSED" : "RECORDING") · \(units.duration(tracker.elapsed))")
+                Text("\(tracker.isPaused ? "PAUSED" : "RECORDING") · \(units.duration(tracker.elapsed))\(tracker.isPaused ? "" : " · " + activityLabel)")
                     .font(.sb(14))
                     .tracking(14 * 0.04)
                     .monospacedDigit()
@@ -230,6 +316,14 @@ struct TrackScreen: View {
                     .font(.sb(20))
                     .foregroundStyle(.sbSecondary)
             }
+        }
+    }
+
+    private var activityLabel: String {
+        switch tracker.activity {
+        case .run: "RIDING"
+        case .lift: "LIFT"
+        case .still: "STOPPED"
         }
     }
 
@@ -329,6 +423,7 @@ struct TrackScreen: View {
     private func stopTracking() {
         tracker.stopTracking()
         follow = false
+        cardExpanded = false
     }
 
     private func togglePause() {
@@ -339,8 +434,77 @@ struct TrackScreen: View {
         }
     }
 
+    /// Friends who are riding and sharing a position, so they can be drawn on the map.
+    private var sharedFriends: [Friend] {
+        friends.friends.filter { $0.coordinate != nil }
+    }
+
+    /// Zoomed far out, tags would pile up, so each rider becomes a small coloured dot.
+    private var compactMarkers: Bool {
+        (lastCamera?.distance ?? 0) > 8000
+    }
+
+    /// Centres the map on a rider without turning on Follow.
+    private func centerOn(_ friend: Friend) {
+        guard let coordinate = friend.coordinate else { return }
+        follow = false
+        showingEveryone = false
+        ignoreUserCameraUntil = Date().addingTimeInterval(0.6)
+        withAnimation(.easeOut(duration: 0.45)) {
+            cameraPosition = .camera(MapCamera(
+                centerCoordinate: coordinate,
+                distance: lastCamera?.distance ?? 1500,
+                heading: lastCamera?.heading ?? 0,
+                pitch: lastCamera?.pitch ?? 0
+            ))
+        }
+    }
+
+    private var showEveryoneButton: some View {
+        Button(action: showEveryone) {
+            Image(systemName: "person.2.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(showingEveryone ? Color.white : Color.sbCharcoal)
+                .frame(width: 48, height: 48)
+                .background(showingEveryone ? Color.sbCharcoal : Color.white, in: Circle())
+                .sbShadow(y: 4, blur: 14, opacity: 0.35)
+        }
+        .buttonStyle(PressableStyle())
+        .accessibilityLabel("Show everyone on the map")
+        .accessibilityAddTraits(showingEveryone ? .isSelected : [])
+    }
+
+    /// Zooms out to fit you and every friend who is sharing a position, keeping them clear of the stats card.
+    private func showEveryone() {
+        var points = sharedFriends.compactMap(\.coordinate)
+        if let here = tracker.currentLocation?.coordinate { points.append(here) }
+        guard let first = points.first else { return }
+        var minLat = first.latitude, maxLat = first.latitude, minLon = first.longitude, maxLon = first.longitude
+        for point in points {
+            minLat = min(minLat, point.latitude); maxLat = max(maxLat, point.latitude)
+            minLon = min(minLon, point.longitude); maxLon = max(maxLon, point.longitude)
+        }
+        // Room around the riders (at least about 400 m), and extra below so the stats card doesn't cover them.
+        let latSpan = max((maxLat - minLat) * 1.5, 0.004)
+        let lonSpan = max((maxLon - minLon) * 1.5, 0.004)
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2 - latSpan * 0.2,
+            longitude: (minLon + maxLon) / 2
+        )
+        follow = false
+        showingEveryone = true
+        ignoreUserCameraUntil = Date().addingTimeInterval(0.6)
+        withAnimation(.easeOut(duration: 0.45)) {
+            cameraPosition = .region(MKCoordinateRegion(
+                center: center,
+                span: MKCoordinateSpan(latitudeDelta: latSpan * 1.4, longitudeDelta: lonSpan)
+            ))
+        }
+    }
+
     private func startFollowing() {
         follow = true
+        showingEveryone = false
         moveCameraToUser()
     }
 
@@ -353,6 +517,7 @@ struct TrackScreen: View {
     }
 
     private func recenter() {
+        showingEveryone = false
         moveCameraToUser()
     }
 
@@ -366,127 +531,90 @@ struct TrackScreen: View {
 
 // MARK: - Components
 
-private struct WeatherChip: View {
-    let weather: Weather
-    let units: Units
+/// Slim bar along the top: invites you to ride with someone, or shows your crew and who is on the map.
+private struct CrewPill: View {
+    let friends: [Friend]
+
+    private static let offlineGrey = Color(hex: 0x8C939D)
 
     var body: some View {
-        HStack(spacing: 12) {
-            icon
-            VStack(alignment: .leading, spacing: 4) {
-                Text(String(format: "%.1f°%@", units.temperatureValue(celsius: weather.temperatureCelsius), units.temperatureUnit))
-                    .font(.sb(22, .extraBold))
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
-                    .cssLineHeight(1, fontSize: 22)
-                Text("\(weather.description) · WIND \(wind)")
-                    .font(.sb(13))
-                    .tracking(13 * 0.04)
-                    .foregroundStyle(Color.white.opacity(0.88))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .cssLineHeight(1, fontSize: 13)
-            }
+        // Who counts as online ages on its own, so re-read the clock now and then.
+        TimelineView(.periodic(from: .now, by: 20)) { context in
+            content(now: context.date)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.sbRed, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .sbShadow(y: 6, blur: 18, opacity: 0.35)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var wind: String {
-        let kmh = weather.windMetersPerSecond * 3.6
-        let value = units.metric ? kmh : kmh * 0.621
-        return "\(Int(value.rounded())) \(units.metric ? "KM/H" : "MPH")"
-    }
-
-    @ViewBuilder
-    private var icon: some View {
-        if weather.isClearDay {
-            Circle()
-                .fill(Color.sbSun)
-                .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                .frame(width: 28, height: 28)
-        } else {
-            Image(systemName: weather.symbolName)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 28, height: 28)
-        }
-    }
-}
-
-/// Two-line call to action in the friends chip's place: sign in, or invite someone to ride.
-private struct PromptChip: View {
-    let title: String
-    let subtitle: String
-    var centered = false
-
-    var body: some View {
-        VStack(alignment: centered ? .center : .leading, spacing: 4) {
-            Text(title)
-                .font(.sb(18, .extraBold))
-                .foregroundStyle(.sbRed)
-                .cssLineHeight(1, fontSize: 18)
-            Text(subtitle)
-                .font(.sb(13))
-                .tracking(13 * 0.04)
-                .foregroundStyle(.sbSecondary)
-                .cssLineHeight(1, fontSize: 13)
-        }
-        .lineLimit(1)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .frame(maxHeight: .infinity)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(.leading, 8)
+        .padding(.trailing, 14)
+        .frame(height: 48)
+        .frame(maxWidth: .infinity)
+        .background(Color.white, in: Capsule())
         .sbShadow(y: 6, blur: 18, opacity: 0.35)
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(friends.isEmpty ? "Ride with someone" : "Your crew")
     }
-}
 
-/// Friends riding right now: up to three overlapping avatars and the count.
-private struct FriendsChip: View {
-    let riding: [Friend]
+    private func isLive(_ friend: Friend, now: Date) -> Bool {
+        friend.coordinate != nil && now.timeIntervalSince(friend.updatedAt ?? .distantPast) <= RiderTag.liveWindow
+    }
 
-    var body: some View {
-        HStack(spacing: 9) {
-            if riding.isEmpty {
+    private func content(now: Date) -> some View {
+        let live = friends.filter { isLive($0, now: now) }
+        let ordered = live + friends.filter { !isLive($0, now: now) }
+        let offline = friends.count - live.count
+
+        return HStack(spacing: 12) {
+            if friends.isEmpty {
                 Image(systemName: "person.2.fill")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.sbSecondary)
-                    .frame(height: 26)
+                    .foregroundStyle(.sbRed)
+                    .padding(.leading, 8)
+                Text("RIDE WITH SOMEONE")
+                    .font(.sb(16, .extraBold))
+                    .foregroundStyle(.sbCharcoal)
+                    .lineLimit(1)
             } else {
-                HStack(spacing: -9) {
-                    ForEach(riding.prefix(3)) { friend in
-                        Circle()
-                            .fill(Color(hex: friend.avatarColor))
+                HStack(spacing: -10) {
+                    ForEach(Array(ordered.prefix(3))) { friend in
+                        SportGlyph(sport: .board, size: 18)
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                            .background(isLive(friend, now: now) ? Color(hex: friend.avatarColor) : Self.offlineGrey, in: Circle())
                             .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                            .frame(width: 26, height: 26)
                     }
                 }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title(ordered))
+                        .font(.sb(16, .extraBold))
+                        .foregroundStyle(.sbCharcoal)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .cssLineHeight(1, fontSize: 16)
+                    Text(subtitle(online: live.count, offline: offline))
+                        .font(.sb(11))
+                        .tracking(11 * 0.04)
+                        .foregroundStyle(.sbSecondary)
+                        .lineLimit(1)
+                        .cssLineHeight(1, fontSize: 11)
+                }
             }
-            Text("\(riding.count)")
-                .font(.sbFixed(18))
-                .monospacedDigit()
-                .foregroundStyle(.sbCharcoal)
-                .cssLineHeight(1, fontSize: 18)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 9, weight: .heavy))
+                .foregroundStyle(.sbChevron)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .frame(maxHeight: .infinity)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .sbShadow(y: 6, blur: 18, opacity: 0.35)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(riding.isEmpty
-            ? "No friends riding"
-            : "\(riding.count) friends riding: \(riding.map(\.displayName).joined(separator: ", "))")
+    }
+
+    private func title(_ ordered: [Friend]) -> String {
+        let first = ordered[0].displayName.uppercased()
+        return ordered.count > 1 ? "RIDING WITH \(first) +\(ordered.count - 1)" : "RIDING WITH \(first)"
+    }
+
+    private func subtitle(online: Int, offline: Int) -> String {
+        offline > 0 ? "\(online) ON THE MAP · \(offline) OFFLINE" : "\(online) ON THE MAP"
     }
 }
 
-private struct UserDot: View {
+struct UserDot: View {
     var body: some View {
         Circle()
             .fill(Color.sbUserDot)
@@ -501,13 +629,15 @@ private struct UserDot: View {
 }
 
 private struct PulsingDot: View {
+    var size: CGFloat = 9
+    var pulses = true
     @State private var dimmed = false
 
     var body: some View {
         Circle()
             .fill(Color.sbRed)
-            .frame(width: 9, height: 9)
-            .opacity(dimmed ? 0.25 : 1)
+            .frame(width: size, height: size)
+            .opacity(dimmed && pulses ? 0.25 : 1)
             .onAppear {
                 withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
                     dimmed = true

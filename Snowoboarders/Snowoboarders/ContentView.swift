@@ -6,7 +6,6 @@
 import SwiftUI
 import SwiftData
 import UIKit
-import FBSDKCoreKit
 
 enum AppTab {
     case track, stats, settings
@@ -15,9 +14,8 @@ enum AppTab {
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var tracker = LocationTracker()
-    @StateObject private var weatherService = WeatherService()
-    @StateObject private var auth = AuthStore()
     @StateObject private var friends = FriendsStore()
+    @StateObject private var watchBridge = PhoneWatchBridge()
 
     @State private var tab: AppTab = .track
     @State private var statsPath = NavigationPath()
@@ -31,39 +29,28 @@ struct ContentView: View {
             tabContent(.stats) { StatsScreen(path: $statsPath) }
             tabContent(.settings) { SettingsScreen(path: $settingsPath) }
 
-            FloatingTabBar(
-                selection: tab,
-                initials: auth.user?.initials ?? "SB",
-                onTrack: { tab = .track },
-                onStats: {
-                    if tab == .stats { statsPath = NavigationPath() }
-                    tab = .stats
-                },
-                onSettings: {
-                    if tab == .settings { settingsPath = NavigationPath() }
-                    tab = .settings
-                }
-            )
+            HStack(spacing: 10) {
+                FloatingTabBar(
+                    selection: tab,
+                    onTrack: { tab = .track },
+                    onStats: {
+                        if tab == .stats { statsPath = NavigationPath() }
+                        tab = .stats
+                    }
+                )
+                SettingsTabButton(active: tab == .settings) { tab = .settings }
+            }
             .padding(.horizontal, 14)
             .padding(.bottom, 30)
         }
         .ignoresSafeArea(edges: .bottom)
         .environmentObject(tracker)
-        .environmentObject(weatherService)
-        .environmentObject(auth)
         .environmentObject(friends)
         .preferredColorScheme(.light)
         .onAppear {
             tracker.configure(context: modelContext)
             tracker.requestAuthorization()
-            weatherService.start(location: { tracker.currentLocation })
-        }
-        .onChange(of: tracker.hasFixedLocation) { _, hasFix in
-            if hasFix { weatherService.refresh(location: tracker.currentLocation) }
-        }
-        .sheet(isPresented: $auth.isShowingSignIn, onDismiss: joinPendingInvite) {
-            SignInSheet()
-                .environmentObject(auth)
+            watchBridge.start(tracker: tracker)
         }
         .sheet(isPresented: $friends.isShowingRideTogether, onDismiss: {
             friends.justJoined = nil
@@ -72,43 +59,42 @@ struct ContentView: View {
             RideTogetherSheet()
                 .environmentObject(friends)
         }
+        .onChange(of: tracker.isTracking) { _, _ in updateSharing() }
+        .onChange(of: friends.friends.isEmpty) { _, _ in updateSharing() }
+        .onChange(of: friends.me) { _, _ in updateSharing() }
+        .onChange(of: friends.isInviting) { _, _ in updateSharing() }
         .onOpenURL(perform: handle)
-        .task(id: auth.user?.id) {
-            friends.setRider(auth.user)
-            if auth.isSignedIn {
-                await auth.verifyAppleCredential()
-                await friends.refresh()
+        .task {
+            // Keep friends' positions fresh on the map even when this rider isn't recording
+            // (a recording ride refreshes them along with its own heartbeat).
+            while !Task.isCancelled {
+                if !friends.isSharing { await friends.refresh() }
+                try? await Task.sleep(for: .seconds(friends.friends.isEmpty ? 60 : 15))
             }
         }
+    }
+
+    /// Your position goes to your crew as soon as you are riding with someone, recording a ride, or waiting for
+    /// someone to join your invite.
+    private func updateSharing() {
+        friends.setSharing(tracker.isTracking || !friends.friends.isEmpty || friends.isInviting, location: { tracker.currentLocation })
     }
 
     private func handle(_ url: URL) {
-        if url.scheme == InviteLink.scheme {
-            tab = .track
-            if auth.isSignedIn {
-                friends.isShowingRideTogether = true
-                Task { await friends.join(url.absoluteString) }
-            } else {
-                friends.pendingInvite = url.absoluteString
-                auth.isShowingSignIn = true
-            }
-        } else if AuthStore.isFacebookConfigured {
-            // Facebook returns here after login in its app or in Safari.
-            ApplicationDelegate.shared.application(
-                UIApplication.shared,
-                open: url,
-                sourceApplication: nil,
-                annotation: [UIApplication.OpenURLOptionsKey.annotation]
-            )
+        guard InviteLink.isInvite(url) else { return }
+        tab = .track
+        // The Live Activity links here: just show the ride.
+        if url.host == "ride" {
+            friends.isShowingRideTogether = false
+            return
         }
-    }
-
-    /// Joins a scanned invite once the sign-in sheet it opened has gone away.
-    private func joinPendingInvite() {
-        guard auth.isSignedIn, let invite = friends.pendingInvite else { return }
-        friends.pendingInvite = nil
         friends.isShowingRideTogether = true
-        Task { await friends.join(invite) }
+        if friends.me == nil {
+            // The sheet asks for a name first, then joins.
+            friends.pendingInvite = url.absoluteString
+        } else {
+            Task { await friends.join(url.absoluteString) }
+        }
     }
 
     /// Every tab stays alive so the map camera and each navigation stack keep their state.
@@ -120,23 +106,46 @@ struct ContentView: View {
     }
 }
 
-struct FloatingTabBar: View {
-    let selection: AppTab
-    let initials: String
-    let onTrack: () -> Void
-    let onStats: () -> Void
-    let onSettings: () -> Void
+/// Settings sits beside the tab bar as its own round glass button.
+struct SettingsTabButton: View {
+    let active: Bool
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 6) {
-            item("TRACK", systemImage: "record.circle", active: selection == .track, action: onTrack)
-            item("STATS", systemImage: "chart.bar.fill", active: selection == .stats, action: onStats)
-            avatar
+        Button(action: action) {
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(active ? Color.white : Color.sbCharcoal)
+                .frame(width: 58, height: 58)
+                .glassEffect(
+                    active ? .regular.tint(.sbRed).interactive() : .regular.tint(Color.white.opacity(0.6)).interactive(),
+                    in: Circle()
+                )
+                .contentShape(Circle())
         }
-        .padding(.horizontal, 8)
-        .frame(height: 62)
-        .background(Color.sbRed, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .sbShadow(y: 10, blur: 30, opacity: 0.3)
+        .buttonStyle(.plain)
+        .sbShadow(y: 10, blur: 30, opacity: 0.18)
+        .accessibilityLabel("Settings")
+        .accessibilityAddTraits(active ? .isSelected : [])
+    }
+}
+
+struct FloatingTabBar: View {
+    let selection: AppTab
+    let onTrack: () -> Void
+    let onStats: () -> Void
+
+    var body: some View {
+        GlassEffectContainer(spacing: 6) {
+            HStack(spacing: 6) {
+                item("TRACK", systemImage: "record.circle", active: selection == .track, action: onTrack)
+                item("STATS", systemImage: "chart.bar.fill", active: selection == .stats, action: onStats)
+            }
+            .padding(6)
+        }
+        // Tinted light so the charcoal labels read over the dark map as well as over white screens.
+        .glassEffect(.regular.tint(Color.white.opacity(0.6)), in: Capsule())
+        .sbShadow(y: 10, blur: 30, opacity: 0.18)
     }
 
     private func item(_ title: String, systemImage: String, active: Bool, action: @escaping () -> Void) -> some View {
@@ -147,37 +156,14 @@ struct FloatingTabBar: View {
                 Text(title)
                     .font(.sb(16))
             }
-            .foregroundStyle(Color.white.opacity(active ? 1 : 0.78))
+            .foregroundStyle(active ? Color.white : Color.sbCharcoal)
             .frame(maxWidth: .infinity)
             .frame(height: 46)
-            .background(
-                active ? Color.black.opacity(0.2) : .clear,
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-            .contentShape(Rectangle())
+            .glassEffect(active ? .regular.tint(.sbRed).interactive() : .identity, in: Capsule())
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(active ? .isSelected : [])
-    }
-
-    private var avatar: some View {
-        Button(action: onSettings) {
-            Text(initials)
-                .font(.sbFixed(15))
-                .foregroundStyle(.white)
-                .frame(width: 46, height: 46)
-                .background(Color.sbCharcoal, in: Circle())
-                .background {
-                    if selection == .settings {
-                        Circle()
-                            .strokeBorder(Color.white, lineWidth: 2)
-                            .padding(-4)
-                    }
-                }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Settings")
-        .accessibilityAddTraits(selection == .settings ? .isSelected : [])
     }
 }
 

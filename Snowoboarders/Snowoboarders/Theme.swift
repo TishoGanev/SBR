@@ -26,6 +26,8 @@ extension Color {
     static let sbMapBackground = Color(hex: 0x141B24)
     static let sbSun = Color(hex: 0xFFB340)
     static let sbUserDot = Color(hex: 0x1A7CFF)
+    static let sbLift = Color(hex: 0x4DA3FF)
+    static let sbStill = Color(hex: 0xB8B8B8)
 }
 
 extension ShapeStyle where Self == Color {
@@ -157,14 +159,15 @@ struct Units {
         metric ? meters : meters * Self.feetPerMeter
     }
 
-    func temperatureValue(celsius: Double) -> Double {
-        metric ? celsius : celsius * 9 / 5 + 32
+    /// "1H 42M" or "12M"; for summaries where seconds are noise.
+    func compactDuration(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        return minutes >= 60 ? "\(minutes / 60)H \(minutes % 60)M" : "\(minutes)M"
     }
 
     var distanceUnit: String { metric ? "km" : "mi" }
     var speedUnit: String { metric ? "KM/H" : "MPH" }
     var altitudeUnit: String { metric ? "m" : "ft" }
-    var temperatureUnit: String { metric ? "C" : "F" }
 
     func distance(meters: Double) -> String {
         String(format: "%.2f %@", distanceValue(meters: meters), distanceUnit)

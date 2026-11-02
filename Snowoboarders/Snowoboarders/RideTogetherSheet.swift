@@ -17,17 +17,28 @@ struct RideTogetherSheet: View {
     @State private var mode: Mode = .myCode
     @State private var typedCode = ""
     @FocusState private var isTypingCode: Bool
+    @State private var nameDraft = ""
+    @State private var confirmingLeave = false
+    @State private var isSharingInvite = false
+    @FocusState private var isTypingName: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let friend = friends.justJoined {
                 joined(friend)
+            } else if friends.me == nil {
+                nameStep
             } else {
                 Text("RIDE TOGETHER")
                     .font(.sbFixed(32))
                     .foregroundStyle(.sbCharcoal)
                     .cssLineHeight(1, fontSize: 32)
                     .accessibilityAddTraits(.isHeader)
+
+                if !friends.friends.isEmpty {
+                    crewRow
+                        .padding(.top, 14)
+                }
 
                 SBSegmentedControl(
                     options: [("MY CODE", Mode.myCode), ("SCAN A CODE", Mode.scan)],
@@ -61,15 +72,99 @@ struct RideTogetherSheet: View {
         .animation(.easeOut(duration: 0.25), value: isTypingCode)
         // Typing collapses the camera box instead, so the field and JOIN stay above the keyboard.
         .ignoresSafeArea(.keyboard)
-        .presentationDetents([.height(640)])
+        .presentationDetents([.height(friends.friends.isEmpty ? 640 : 700)])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(28)
-        .task {
+        .task(id: friends.me) {
             await friends.loadInvite()
             friends.startHosting()
         }
         .onDisappear { friends.stopHosting() }
+        .sheet(isPresented: $isSharingInvite) {
+            if let invite = friends.invite {
+                ActivityView(items: ["Ride with me on SnowMan. Tap the link to join my crew, or enter the code \(Self.formatted(invite.code)).\n\(invite.url.absoluteString)"]) { completed in
+                    // Sent through Mail, Messages, Viber...: the invite is out, so the screen has done its job.
+                    if completed { friends.isShowingRideTogether = false }
+                }
+                .presentationDetents([.medium, .large])
+            }
+        }
         .onChange(of: mode) { _, _ in friends.joinError = nil }
+    }
+
+    // MARK: - Crew
+
+    private var crewRow: some View {
+        HStack(spacing: 10) {
+            Text(friends.ridingNow.isEmpty
+                 ? "NOBODY IS RIDING WITH YOU NOW"
+                 : "RIDING WITH \(friends.ridingNow.map { $0.displayName.uppercased() }.joined(separator: ", "))")
+                .font(.sb(15))
+                .foregroundStyle(.sbCharcoal)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+            Button("LEAVE") { confirmingLeave = true }
+                .font(.sb(15))
+                .foregroundStyle(.sbRed)
+                .buttonStyle(PressableStyle())
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 46)
+        .background(Color.sbLightGrey, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .confirmationDialog("Leave today's crew?", isPresented: $confirmingLeave, titleVisibility: .visible) {
+            Button("Leave", role: .destructive) { friends.leave() }
+            Button("Stay", role: .cancel) {}
+        } message: {
+            Text("You'll stop riding with \(friends.friends.map(\.displayName).joined(separator: ", ")). You can join again with a code.")
+        }
+    }
+
+    // MARK: - Name
+
+    /// Nearby riders need something to call you by. There are no accounts; the name stays on this phone.
+    private var nameStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("YOUR NAME")
+                .font(.sbFixed(32))
+                .foregroundStyle(.sbCharcoal)
+                .cssLineHeight(1, fontSize: 32)
+                .accessibilityAddTraits(.isHeader)
+
+            Text("This is what riders see when they join your code. It isn't stored anywhere but on your phone.")
+                .font(.sb(17, .semibold))
+                .foregroundStyle(.sbSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 10)
+
+            TextField("Your name", text: $nameDraft)
+                .font(.sb(22))
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .submitLabel(.continue)
+                .focused($isTypingName)
+                .onSubmit(saveName)
+                .padding(.horizontal, 16)
+                .frame(height: 56)
+                .background(Color.sbLightGrey, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .padding(.top, 24)
+
+            Button(action: saveName) {
+                Text("CONTINUE")
+                    .font(.sb(20))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.sbRed, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+            .buttonStyle(PressableStyle())
+            .disabled(nameDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+            .padding(.top, 12)
+        }
+        .onAppear { isTypingName = true }
+    }
+
+    private func saveName() {
+        friends.setName(nameDraft)
     }
 
     // MARK: - My code
@@ -103,17 +198,16 @@ struct RideTogetherSheet: View {
                     .accessibilityLabel("Code \(invite.code.map(String.init).joined(separator: " "))")
             }
 
-            Text("Let a friend scan this with their camera or in Snowboarder. Keep it on screen until you see them join.")
+            Text("Let a friend scan this with their camera or in RideLirium. Keep it on screen until you see them join.")
                 .font(.sb(16, .semibold))
                 .foregroundStyle(.sbSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let invite = friends.invite {
-                ShareLink(
-                    item: invite.url,
-                    message: Text("Ride with me on Snowboarder. Code: \(Self.formatted(invite.code))")
-                ) {
+                Button {
+                    isSharingInvite = true
+                } label: {
                     Text("SHARE INVITE")
                         .font(.sb(20))
                         .foregroundStyle(.sbGreyButtonText)
@@ -297,4 +391,19 @@ private struct QRScannerView: UIViewControllerRepresentable {
             }
         }
     }
+}
+
+
+/// The system share sheet, with a callback that says whether the invite was actually sent (SwiftUI's ShareLink has none).
+private struct ActivityView: UIViewControllerRepresentable {
+    let items: [Any]
+    let onFinish: (Bool) -> Void
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.completionWithItemsHandler = { _, completed, _, _ in onFinish(completed) }
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
