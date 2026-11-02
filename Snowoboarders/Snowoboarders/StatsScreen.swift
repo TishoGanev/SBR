@@ -15,24 +15,34 @@ struct SessionSummary: Identifiable {
     var id: Int { session }
     var startDate: Date { points.first?.timestamp ?? Date() }
     var endDate: Date { points.last?.timestamp ?? Date() }
-    var maxSpeed: Double { points.map(\.speed).max() ?? 0 }
+    var maxSpeed: Double { analysis.segments.isEmpty ? (points.map(\.speed).max() ?? 0) : analysis.movingMaxSpeed }
     var coordinates: [CLLocationCoordinate2D] { points.map(\.coordinate) }
 
     /// Stable across launches even if a deleted session's number is reused.
     var placeKey: String { "\(session)-\(Int(startDate.timeIntervalSince1970))" }
 
-    var distance: Double {
-        var total: Double = 0
-        var previous: CLLocation?
-        for point in points {
-            let location = CLLocation(latitude: point.lat, longitude: point.lon)
-            if let previous {
-                total += location.distance(from: previous)
-            }
-            previous = location
-        }
-        return total
+    /// Runs, lifts and stops. Cached because Stats asks for it on every redraw.
+    var analysis: RideAnalysis {
+        let key = "\(session)-\(points.count)-\(Int(startDate.timeIntervalSince1970))" as NSString
+        if let cached = Self.analysisCache.object(forKey: key) { return cached.analysis }
+        let analysis = ActivityDetector.analyze(points)
+        Self.analysisCache.setObject(AnalysisBox(analysis), forKey: key)
+        return analysis
     }
+
+    private static let analysisCache = NSCache<NSString, AnalysisBox>()
+
+    /// Distance covered while moving; GPS drift from standing still isn't counted.
+    var distance: Double {
+        let analysis = analysis
+        if !analysis.segments.isEmpty { return analysis.movingDistance }
+        return DistanceRule.steps(points).reduce(0, +)
+    }
+}
+
+private final class AnalysisBox {
+    let analysis: RideAnalysis
+    init(_ analysis: RideAnalysis) { self.analysis = analysis }
 }
 
 /// Ski seasons run across New Year, so July starts the next one (e.g. Nov 2025 and Mar 2026 are both 2025/26).
@@ -180,7 +190,9 @@ struct StatsScreen: View {
                 .monospacedDigit()
                 .foregroundStyle(.sbCharcoal)
                 .cssLineHeight(1, fontSize: 40)
-                .frame(width: 44, alignment: .trailing)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: 44, alignment: .trailing)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(session.startDate.formatted(.dateTime.month(.abbreviated)).uppercased())
